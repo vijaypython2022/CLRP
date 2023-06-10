@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 from pathlib import Path
 
+from celery.schedules import crontab
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -39,7 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'Api',
-    'loyalty_app',
+
 ]
 
 MIDDLEWARE = [
@@ -126,3 +128,14 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Celery Configuration
+CELERY_BROKER_URL = 'your_broker_url'  # Example: 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'your_result_backend'  # Example: 'redis://localhost:6379/0'
+CELERY_BEAT_SCHEDULE = {
+    'daily-task': {
+        'task': 'your_app.tasks.daily_task',
+        'schedule': crontab(hour=0, minute=0),  # Execute at midnight every day
+    },
+}

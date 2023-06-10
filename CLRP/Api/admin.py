@@ -8,11 +8,11 @@ admin.site.register(Product)
 admin.site.register(LoyaltyProgram)
 admin.site.register(Membership_tiers)
 admin.site.register(Vendor)
+admin.site.register(RewardPoints)
 
-
-@admin.register(RewardPoints)
-class RewardPointAdmin(admin.ModelAdmin):
-    list_display = ['id', 'customer', 'points', 'last_updated']
+# @admin.register(RewardPoints)
+# class RewardPointAdmin(admin.ModelAdmin):
+#     list_display = ['id', 'customer', 'points', 'last_updated']
 
 
 @admin.register(Customer_purchase)
