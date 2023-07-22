@@ -1,5 +1,12 @@
 from rest_framework import serializers
-from .models import Customer, Product, LoyaltyProgram, Customer_purchase, RewardPoints, Membership_tiers, Vendor
+from .models import Customer, Product, LoyaltyProgram, Customer_purchase, RewardPoints,\
+    Membership_tiers, Vendor,PurchaseReturn
+
+
+class PurchaseReturnSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PurchaseReturn
+        fields = '__all__'
 
 
 class CustomerSerializer(serializers.ModelSerializer):

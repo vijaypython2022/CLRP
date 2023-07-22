@@ -9,15 +9,15 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
-
+import os
+from datetime import timedelta
 from pathlib import Path
 
 from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-
+TEMP_DIR = os.path.join(BASE_DIR,'templates')
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
@@ -29,7 +29,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -40,6 +39,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
+    'rest_framework_simplejwt',
+    'django_celery_beat',
+    'django_celery_results',
     'Api',
 
 ]
@@ -52,6 +55,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 'Api.middleware.LoyaltyMiddleware',
 ]
 
 ROOT_URLCONF = 'CLRP.urls'
@@ -59,7 +63,7 @@ ROOT_URLCONF = 'CLRP.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [TEMP_DIR],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -74,7 +78,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'CLRP.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
@@ -84,7 +87,6 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
@@ -104,7 +106,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
@@ -118,7 +119,6 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
@@ -129,13 +129,69 @@ STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Celery Configuration 1
+# CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Example: 'redis://localhost:6379/0'
+# CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_REDIS_URL', 'redis://127.0.0.1:6379')
+# # CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers.DatabaseScheduler'
+#
+# # CELERY_RESULT_BACKEND = 'redis://localhost'  # Example: 'redis://localhost:6379/0'
+# CELERY_BEAT_SCHEDULE = {
+#     'daily-task': {
+#         'task': 'Api.tasks.expire_reward_points_task',
+#         'schedule': crontab(hour=0, minute=1),  # Execute at midnight every day
+#     },
+# }
+#----------------------------------------------------------------------------------------
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_REDIS_URL', 'redis://127.0.0.1:6379')
+CELERY_ACCEPT_CONTENT=['application/json']
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Asia/Kolkata'
+# CELERY_RESULT_BACKEND ='redis://127.0.0.1:6379'
+CELERY_RESULT_BACKEND ="db+sqlite:///results.db"
 
-# Celery Configuration
-CELERY_BROKER_URL = 'your_broker_url'  # Example: 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'your_result_backend'  # Example: 'redis://localhost:6379/0'
-CELERY_BEAT_SCHEDULE = {
-    'daily-task': {
-        'task': 'your_app.tasks.daily_task',
-        'schedule': crontab(hour=0, minute=0),  # Execute at midnight every day
-    },
+
+# JWT configuration
+
+# AUTH_USER_MODEL = 'Api.User'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # Other authentication classes if any
+    ],
 }
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=20),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': False,
+    'UPDATE_LAST_LOGIN': False,
+
+    # 'ALGORITHM': 'HS256',
+    # 'SIGNING_KEY': SECRET_KEY,
+    # 'VERIFYING_KEY': None,
+    # 'AUDIENCE': None,
+    # 'ISSUER': None,
+    # 'JWK_URL': None,
+    # 'LEEWAY': 0,
+
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+    'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
+
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+    'TOKEN_USER_CLASS': 'rest_framework_simplejwt.models.TokenUser',
+
+    'JTI_CLAIM': 'jti',
+
+}
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
